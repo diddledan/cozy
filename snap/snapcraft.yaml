@@ -1,0 +1,81 @@
+name: cozy
+version: git
+icon: data/icons/hicolor/256x256/apps/com.github.geigi.cozy.png
+summary: A modern audio book player for Linux using GTK+ 3
+description: |
+  Cozy is a modern audio book player for Linux.
+
+  Here are some of the current features:
+  - Import all your audiobooks into cozy to browse them comfortably
+  - Listen to your DRM free mp3, flac, ogg audio books
+  - Remembers your playback position
+  - Sort your audio books by author, reader & name
+
+grade: stable
+confinement: devmode
+
+plugs:
+  gnome-3-26-1604:
+    interface: content
+    content: gnome-3-26-1604
+    target: gnome-platform
+    default-provider: gnome-3-26-1604
+
+apps:
+  cozy:
+    command: desktop-launch $SNAP/usr/local/bin/com.github.geigi.cozy
+    desktop: usr/local/share/applications/com.github.geigi.cozy.desktop
+    plugs:
+      - desktop
+      - gnome-3-26-1604
+      - gsettings
+      - home
+      - pulseaudio
+      - wayland
+      - x11
+
+parts:
+  gnome-platform:
+    after: [desktop-gnome-platform]
+    plugin: nil
+    prepare: |
+      echo "deb http://ppa.launchpad.net/ubuntu-desktop/gnome-3-26/ubuntu xenial main" | tee /etc/apt/sources.list.d/gnome-3-26.list
+      apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 399B698EEA9EF163B6F9A0F62CC98497A1231595
+      apt update
+      apt upgrade -yy
+    prime:
+      - -*
+
+  cozy:
+    after: [gnome-platform]
+    plugin: meson
+    source: .
+    prepare: |
+      sed -i 's|^Icon=|Icon=${SNAP}/usr/local/share/icons/hicolor/scalable/apps/com.github.geigi.cozy.svg|' \
+        data/desktop.in
+      sed -i 's|^Exec=|Exec=cozy %U|' \
+        data/desktop.in
+    build-packages:
+      - gir1.2-gtk-3.0
+      - python3
+      - python3-gi
+      - python3-mutagen
+      - python3-pip
+    stage-packages:
+      - gir1.2-gtk-3.0
+      - libpulse0
+      - python3
+      - python3-gi
+      - python3-mutagen
+    prime:
+      - usr/lib/**/gdk-pixbuf*
+      - usr/lib/**/gio/modules
+      - usr/lib/**/girepository-1.0
+      - usr/lib/**/gtk-3.0/3.0.0
+      - usr/lib/**/libgtk-3-0/gtk-query-immodules-3.0
+      - usr/lib/**/mesa-egl
+      - usr/lib/**/openssl-1.0.0/engines
+      - usr/lib/python*
+      - usr/local
+      - usr/share/locale
+
